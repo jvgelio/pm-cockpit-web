@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design System - PM Cockpit</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h1>PM Cockpit<br>Design System</h1>
+    </div>
+    <ul class="nav-list">
+      <li><a href="#visao-geral">Visão Geral</a></li>
+      <li><a href="#cores-e-temas">Cores & Temas</a></li>
+      <li><a href="#layout">Layout & Navegação</a></li>
+      <li class="nav-separator">Componentes</li>
+      <li><a href="#card">Card</a></li>
+      <li><a href="#form-group">FormGroup</a></li>
+      <li><a href="#initiative-row">InitiativeRow</a></li>
+      <li><a href="#metric-card">MetricCard</a></li>
+      <li><a href="#page-header">PageHeader</a></li>
+      <li><a href="#status-badge">Status & Badges</a></li>
+      <li><a href="#calendar">Calendar</a></li>
+      <li><a href="#alert-dialog">Alert Dialog</a></li>
+      <li><a href="#form">Form</a></li>
+      <li><a href="#sonner">Sonner</a></li>
+    </ul>
+  </nav>
+
+  <main class="content">
+    <section id="visao-geral">
+      <header class="page-header">
+        <h1>Design System</h1>
+        <p class="subtitle">Guia de referência para componentes UI migrados para Radix + Shadcn</p>
+      </header>
+      <h2>Princípios</h2>
+      <p>O Design System do PM Cockpit foca em <strong>clareza</strong>, <strong>densidade de informação</strong> e
+        <strong>visual premium</strong> inspirado no Linear. Utilizamos <strong>Shadcn UI</strong> como fundação para
+        componentes atômicos e construímos camadas moleculares na pasta <code>shared</code>.
+      </p>
+    </section>
+
+    <section id="cores-e-temas">
+        <h2>Cores & Temas</h2>
+        <div class="example-block">
+            <h3>Modo Escuro (Dark Mode)</h3>
+            <div class="preview" style="gap: 24px;">
+            <p>A aplicação suporta três estados de tema, persistidos via <code>localStorage</code>:</p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <div
+                style="padding: 12px 20px; border-radius: 8px; background: #ffffff; color: #111827; border: 1px solid #e5e7eb; font-weight: 600; font-size: 14px;">
+                Claro (Default)</div>
+                <div
+                style="padding: 12px 20px; border-radius: 8px; background: #0f172a; color: #f8fafc; border: 1px solid #1e293b; font-weight: 600; font-size: 14px;">
+                Escuro</div>
+                <div
+                style="padding: 12px 20px; border-radius: 8px; background: linear-gradient(135deg, #ffffff 50%, #0f172a 50%); color: #3b82f6; border: 1px solid #3b82f6; font-weight: 600; font-size: 14px;">
+                Sistema (Auto)</div>
+            </div>
+            <p class="text-xs" style="margin-top: 12px;"><strong>Implementação:</strong> Utilizamos a classe
+                <code>.dark</code> no elemento <code>&lt;html&gt;</code> combinada com variáveis CSS (Tokens HSL) para
+                trocas instantâneas sem FOUC.</p>
+            </div>
+        </div>
+    </section>
+    
+    <section id="layout">
+        <h2>Layout & Navegação</h2>
+        <div class="grid-docs">
+            <div class="doc-card" style="cursor: default;">
+            <span class="status-pill status-ready">Migrado</span>
+            <h3>TopBar</h3>
+            <p>Barra superior com seletores de ciclo, busca global e controles de tema via DropdownMenu.</p>
+            </div>
+
+            <div class="doc-card" style="cursor: default;">
+            <span class="status-pill status-ready">Migrado</span>
+            <h3>Sidebar</h3>
+            <p>Menu lateral retrátil com navegação, branding e listagem de times.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: Card -->
+    <section id="card">
+      <h2>Card</h2>
+      <p>Componente de container fundamental para agrupar conteúdo relacionado.</p>
+      <div class="example-block">
+        <h3>Exemplos</h3>
+        <div class="preview" style="display:flex; flex-wrap: wrap; gap: 24px;">
+          <!-- Card Simples -->
+          <div style="background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: 8px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); width: 300px;">
+              Conteúdo básico dentro de um card simples.
+          </div>
+          <!-- Card Estruturado -->
+          <div style="background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); width: 300px; overflow: hidden; display: flex; flex-direction: column;">
+              <div style="padding: 12px 20px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-secondary); font-weight: 600;">
+                  Título do Card
+              </div>
+              <div style="padding: 20px; flex-grow: 1;">
+                  Este é o corpo principal do card com maior espaçamento e conteúdo.
+              </div>
+              <div style="padding: 12px 20px; border-top: 1px solid var(--border-subtle); background: var(--bg-tertiary); font-size: 12px; color: var(--text-tertiary);">
+                  Rodapé do card para metadados ou ações.
+              </div>
+          </div>
+        </div>
+      </div>
+      <div class="example-block">
+        <h3>Uso</h3>
+        <pre><code>import { Card, CardHeader, CardBody, CardFooter } from '@/components/shared/Card'
+
+function MyComponent() {
+return (
+  &lt;Card hover onClick={() =&gt; console.log('clicou')}&gt;
+    &lt;CardHeader&gt;
+      &lt;h3&gt;Título&lt;/h3&gt;
+    &lt;/CardHeader&gt;
+    &lt;CardBody&gt;
+      &lt;p&gt;Conteúdo principal...&lt;/p&gt;
+    &lt;/CardBody&gt;
+    &lt;CardFooter&gt;
+      &lt;button&gt;Ação&lt;/button&gt;
+    &lt;/CardFooter&gt;
+  &lt;/Card&gt;
+)
+}</code></pre>
+      </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: FormGroup -->
+    <section id="form-group">
+        <h2>FormGroup</h2>
+        <p>Wrapper para campos de formulário, labels e mensagens de validação.</p>
+        <div class="example-block">
+            <h3>Exemplo</h3>
+            <div class="preview">
+                <div class="form-example" style="max-width: 400px; display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Padrão -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-size: 14px; font-weight: 700; color: var(--text-secondary);">Título da Iniciativa</label>
+                        <input type="text" placeholder="Ex: Novo Dashboard" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-default); background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px;">
+                    </div>
+                    <!-- Com Erro -->
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 14px; font-weight: 700; color: var(--text-secondary);">Prazo Final</label>
+                        <input type="date" style="border-color: #ef4444; width: 100%; padding: 8px 12px; border-radius: 6px; background: var(--bg-tertiary); color: var(--text-primary); font-size: 14px;">
+                        <p style="font-size: 12px; color: #ef4444; margin: 4px 0 0 0; font-weight: 500;">A data selecionada é inválida</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="example-block">
+            <h3>Uso</h3>
+            <pre><code>import { FormGroup } from '@/components/shared/FormGroup'
+import { Input } from '@/components/ui/input'
+
+&lt;FormGroup 
+    label="Email" 
+    description="Usaremos este email para notificações."
+    error={errors.email}
+&gt;
+    &lt;Input type="email" /&gt;
+&lt;/FormGroup&gt;</code></pre>
+        </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: InitiativeRow -->
+    <section id="initiative-row">
+        <h2>InitiativeRow</h2>
+        <p>Linha de iniciativa para visualização em listas com metadados, status e progresso.</p>
+        <div class="example-block">
+            <h3>Exemplo de Lista</h3>
+            <div class="preview initiative-row-preview">
+              <!-- Header -->
+              <div class="demo-row-header">
+                  <span style="width: 24px;"></span>
+                  <span class="header-content">
+                      <span>ID</span>
+                      <span>Título</span>
+                  </span>
+                  <span class="header-meta">
+                      <span style="min-width: 80px;">Time</span>
+                      <span style="min-width: 100px;">Prazo</span>
+                  </span>
+                  <span style="width: 40px; text-align: center;">Pri.</span>
+                  <span style="width: 96px;">Progresso</span>
+                  <span style="width: 32px;"></span>
+              </div>
+              <!-- Row 1: In Progress -->
+              <div class="demo-row">
+                  <div class="status-icon status-in_progress">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                  </div>
+                  <div class="row-content">
+                      <span class="id">PM-001</span>
+                      <span class="title">Redesign do Dashboard Principal</span>
+                  </div>
+                  <div class="meta">
+                      <span class="badge">Design</span>
+                      <span class="due-date">Daqui 2 semanas</span>
+                  </div>
+                  <div class="priority" title="Alta Prioridade">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--warning);"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                  </div>
+                  <div class="progress">
+                      <div class="progress-bar"><div class="progress-bar-fill" style="width: 75%; background: var(--info);"></div></div>
+                  </div>
+                  <div class="actions">...</div>
+              </div>
+              <!-- Row 2: Done -->
+              <div class="demo-row">
+                  <div class="status-icon status-done">
+                      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  </div>
+                  <div class="row-content">
+                      <span class="id">PM-004</span>
+                      <span class="title">Setup do Projeto e Configurações Iniciais</span>
+                  </div>
+                  <div class="meta">
+                      <span class="badge">DevOps</span>
+                      <span class="due-date">Ontem</span>
+                  </div>
+                  <div class="priority" title="Baixa Prioridade">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-tertiary);"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="5 12 12 19 19 12"></polyline></svg>
+                  </div>
+                  <div class="progress">
+                      <div class="progress-bar"><div class="progress-bar-fill" style="width: 100%; background: var(--success);"></div></div>
+                  </div>
+                  <div class="actions">...</div>
+              </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: MetricCard -->
+    <section id="metric-card">
+        <h2>MetricCard</h2>
+        <p>Cards de alto impacto para exibição de KPIS e métricas gerais.</p>
+        <div class="example-block">
+            <h3>Exemplos</h3>
+            <div class="preview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                <!-- Padrão -->
+                <div class="metric-card">
+                    <div class="metric-card-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg></div>
+                    <div>
+                        <div class="metric-card-title">Total de Iniciativas</div>
+                        <div class="metric-card-value">24</div>
+                    </div>
+                </div>
+                <!-- Alerta -->
+                <div class="metric-card metric-card-alert">
+                    <div class="metric-card-icon" style="background: #fee2e2; color: #ef4444;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></div>
+                    <div>
+                        <div class="metric-card-title" style="color: #b91c1c;">Bloqueadas</div>
+                        <div class="metric-card-value" style="color: #991b1b;">3</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: PageHeader -->
+    <section id="page-header">
+        <h2>PageHeader</h2>
+        <p>Título de página padronizado com suporte a ações e subtítulos.</p>
+        <div class="example-block">
+            <h3>Exemplos</h3>
+            <div class="preview">
+                <!-- Simples -->
+                <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 24px;">
+                    <h1 style="font-size: 28px; font-weight: 800; margin: 0;">Iniciativas</h1>
+                    <p style="color: var(--text-tertiary); margin: 4px 0 0 0; font-size: 16px;">Gerencie suas tarefas e objetivos</p>
+                </div>
+                <!-- Com Ações -->
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px;">
+                    <div>
+                        <h1 style="font-size: 28px; font-weight: 800; margin: 0;">Dashboard</h1>
+                        <p style="color: var(--text-tertiary); margin: 4px 0 0 0; font-size: 16px;">Ciclo 2024 Q1</p>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="basic-button">Exportar</button>
+                        <button class="basic-button primary">Novo Item</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: Status & Badges -->
+    <section id="status-badge">
+        <h2>Status & Badges</h2>
+        <p>Indicadores visuais para estados, prioridades e progresso.</p>
+        <div class="example-block">
+            <h3>StatusBadge</h3>
+            <div class="preview">
+                <div class="badge-list">
+                    <span class="sh-badge" style="background: var(--bg-tertiary); color: var(--text-secondary); border-color: var(--border-default);"><span class="dot" style="background: var(--text-muted);"></span> Rascunho</span>
+                    <span class="sh-badge" style="background: rgba(59, 130, 246, 0.1); color: #2563eb; border-color: #bfdbfe;"><span class="dot" style="background: #3b82f6;"></span> Planejado</span>
+                    <span class="sh-badge" style="background: rgba(245, 158, 11, 0.1); color: #d97706; border-color: #fde68a;"><span class="dot" style="background: #f59e0b;"></span> Em Progresso</span>
+                    <span class="sh-badge" style="background: rgba(16, 185, 129, 0.1); color: #059669; border-color: #a7f3d0;"><span class="dot" style="background: #10b981;"></span> Concluído</span>
+                    <span class="sh-badge" style="background: rgba(239, 68, 68, 0.1); color: #dc2626; border-color: #fecaca;"><span class="dot" style="background: #ef4444;"></span> Bloqueado</span>
+                </div>
+            </div>
+        </div>
+        <div class="example-block">
+            <h3>ProgressBar</h3>
+            <div class="preview" style="max-width: 300px;">
+                <div style="height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden;">
+                    <div style="width: 50%; height: 100%; background: var(--warning);"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: Calendar -->
+    <section id="calendar">
+        <h2>Calendar</h2>
+        <p>Um seletor de datas interativo para capturar e exibir informações de data.</p>
+        <div class="example-block">
+            <h3>Exemplo Básico</h3>
+            <div class="preview" style="display: flex; justify-content: center; padding: 20px;">
+                <!-- Placeholder for Calendar, as it's a React component -->
+                <div style="border: 1px dashed var(--border-default); padding: 50px; text-align: center; color: var(--text-muted);">
+                    [Visualização do Calendar Component]
+                </div>
+            </div>
+        </div>
+        <div class="example-block">
+            <h3>Uso</h3>
+            <pre><code>import { Calendar } from '@/components/ui/calendar'
+import React from 'react'
+
+function MyComponent() {
+  const [date, setDate] = React.useState&lt;Date | undefined&gt;(new Date())
+
+  return (
+    &lt;Calendar
+      mode="single"
+      selected={date}
+      onSelect={setDate}
+      className="rounded-md border shadow"
+    /&gt;
+  )
+}</code></pre>
+        </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: Alert Dialog -->
+    <section id="alert-dialog">
+        <h2>Alert Dialog</h2>
+        <p>Uma caixa de diálogo que requer uma ação do usuário, útil para confirmações críticas.</p>
+        <div class="example-block">
+            <h3>Exemplo Básico</h3>
+            <div class="preview" style="display: flex; justify-content: center; padding: 20px;">
+                <!-- Placeholder for Alert Dialog, as it's a React component -->
+                <div style="border: 1px dashed var(--border-default); padding: 50px; text-align: center; color: var(--text-muted);">
+                    [Visualização do Alert Dialog Component]
+                </div>
+            </div>
+        </div>
+        <div class="example-block">
+            <h3>Uso</h3>
+            <pre><code>import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+
+function MyComponent() {
+  return (
+    &lt;AlertDialog&gt;
+      &lt;AlertDialogTrigger&gt;Open&lt;/AlertDialogTrigger&gt;
+      &lt;AlertDialogContent&gt;
+        &lt;AlertDialogHeader&gt;
+          &lt;AlertDialogTitle&gt;Are you absolutely sure?&lt;/AlertDialogTitle&gt;
+          &lt;AlertDialogDescription&gt;
+            This action cannot be undone. This will permanently delete your
+            account and remove your data from our servers.
+          &lt;/AlertDialogDescription&gt;
+        &lt;/AlertDialogHeader&gt;
+        &lt;AlertDialogFooter&gt;
+          &lt;AlertDialogCancel&gt;Cancel&lt;/AlertDialogCancel&gt;
+          &lt;AlertDialogAction&gt;Continue&lt;/AlertDialogAction&gt;
+        &lt;/AlertDialogFooter&gt;
+      &lt;/AlertDialogContent&gt;
+    &lt;/AlertDialog&gt;
+  )
+}</code></pre>
+        </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: Form -->
+    <section id="form">
+        <h2>Form</h2>
+        <p>Proporciona uma estrutura robusta para construir formulários complexos com validação e gestão de estado.</p>
+        <div class="example-block">
+            <h3>Exemplo Básico</h3>
+            <div class="preview" style="display: flex; justify-content: center; padding: 20px;">
+                <!-- Placeholder for Form, as it's a React component -->
+                <div style="border: 1px dashed var(--border-default); padding: 50px; text-align: center; color: var(--text-muted);">
+                    [Visualização do Form Component]
+                </div>
+            </div>
+        </div>
+        <div class="example-block">
+            <h3>Uso</h3>
+            <pre><code>import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { toast } from "@/components/ui/use-toast"
+
+const FormSchema = z.object({
+  username: z.string().min(2, {
+    message: "Username must be at least 2 characters.",
+  }),
+})
+
+function ProfileForm() {
+  const form = useForm&lt;z.infer&lt;typeof FormSchema&gt;&gt;({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      username: "",
+    },
+  })
+
+  function onSubmit(data: z.infer&lt;typeof FormSchema&gt;) {
+    toast({
+      title: "You submitted the following values:",
+      description: (
+        &lt;pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4"&gt;
+          &lt;code className="text-white"&gt;{JSON.stringify(data, null, 2)}&lt;/code&gt;
+        &lt;/pre&gt;
+      ),
+    })
+  }
+
+  return (
+    &lt;Form {...form}&gt;
+      &lt;form onSubmit={form.handleSubmit(onSubmit)} className="w-2/3 space-y-6"&gt;
+        &lt;FormField
+          control={form.control}
+          name="username"
+          render={({ field }) =&gt; (
+            &lt;FormItem&gt;
+              &lt;FormLabel&gt;Username&lt;/FormLabel&gt;
+              &lt;FormControl&gt;
+                &lt;Input placeholder="shadcn" {...field} /&gt;
+              &lt;/FormControl&gt;
+              &lt;FormDescription&gt;
+                This is your public display name. It can be your real name or a
+                pseudonym.
+              &lt;/FormDescription&gt;
+              &lt;FormMessage /&gt;
+            &lt;/FormItem&gt;
+          )}
+        /&gt;
+        &lt;Button type="submit"&gt;Submit&lt;/Button&gt;
+      &lt;/form&gt;
+    &lt;/Form&gt;
+  )
+}</code></pre>
+        </div>
+    </section>
+
+    <div class="content-separator"></div>
+
+    <!-- COMPONENT: Sonner -->
+    <section id="sonner">
+        <h2>Sonner</h2>
+        <p>Um componente de "toast" com estilo moderno e fácil de usar para notificações.
+        <div class="example-block">
+            <h3>Exemplo Básico</h3>
+            <div class="preview" style="display: flex; justify-content: center; padding: 20px;">
+                <!-- Placeholder for Sonner, as it's a React component -->
+                <div style="border: 1px dashed var(--border-default); padding: 50px; text-align: center; color: var(--text-muted);">
+                    [Visualização do Sonner Component]
+                </div>
+            </div>
+        </div>
+        <div class="example-block">
+            <h3>Uso</h3>
+            <pre><code>import { Button } from '@/components/ui/button'
+import { Toaster, toast } from '@/components/ui/sonner'
+
+function MyComponent() {
+  return (
+    &lt;&gt;
+      &lt;Button
+        variant="outline"
+        onClick={() =>
+          toast("Event has been created", {
+            description: "Sunday, December 03, 2023 at 9:00 AM",
+            action: {
+              label: "Undo",
+              onClick: () => console.log("Undo"),
+            },
+          })
+        }
+      &gt;
+        Show Toast
+      &lt;/Button&gt;
+      &lt;Toaster /&gt;
+    &lt;/&gt;
+  )
+}</code></pre>
+        </div>
+    </section>
+
+  </main>
+
+  <script>
+    (function () {
+      // Set theme
+      const theme = localStorage.getItem('pm-cockpit-theme') || 'system';
+      const root = document.documentElement;
+      if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+
+      // Active sidebar link on scroll
+      const sections = document.querySelectorAll('section[id]');
+      const navLi = document.querySelectorAll('.nav-list li a');
+
+      window.addEventListener('scroll', ()=> {
+        let current = '';
+        sections.forEach( section => {
+          const sectionTop = section.offsetTop;
+          if (pageYOffset >= (sectionTop - 100)) {
+            current = section.getAttribute('id');
+          }
+        })
+        
+        navLi.forEach( a => {
+          a.parentElement.classList.remove('active');
+          if (a.getAttribute('href') == `#${current}`) {
+            a.parentElement.classList.add('active');
+          }
+        })
+      });
+
+    })();
+  </script>
+</body>
+
+</html>
