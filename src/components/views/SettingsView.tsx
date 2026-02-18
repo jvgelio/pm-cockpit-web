@@ -1,23 +1,37 @@
 import { useState } from 'react'
 import { useAppStore } from '@/stores/appStore'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/form'
-import { Input } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
-    SelectValue
+    SelectValue,
+    Switch,
+    Label,
+    Input
 } from '@/components/ui/form'
 import { Badge } from '@/components/ui/badge'
-import { Key, Bot, Database, Save, CheckCircle2, Layout, Eye, EyeOff } from 'lucide-react'
-import { Switch } from '@/components/ui/form'
-import { Separator } from '@/components/ui/separator'
 import { toast } from '@/hooks/use-toast'
 import type { AIProvider } from '@/lib/ai'
-import type { InitiativeFieldKey } from '@/types'
+import type { InitiativeFieldKey, Team } from '@/types'
+import { TeamModal } from '@/components/shared/TeamModal'
+import { Separator } from '@/components/ui/separator'
+import {
+    Users,
+    Pencil,
+    Trash2,
+    Plus,
+    Key,
+    Bot,
+    Database,
+    Save,
+    CheckCircle2,
+    Layout,
+    Eye,
+    EyeOff
+} from 'lucide-react'
 
 const PROVIDERS = [
     { id: 'anthropic' as AIProvider, label: 'Anthropic (Direto)' },
@@ -58,7 +72,10 @@ const FIELD_LABELS: Record<InitiativeFieldKey, string> = {
 }
 
 export default function SettingsView() {
-    const { settings, updateSettings } = useAppStore()
+    const { teams, deleteTeam, settings, updateSettings } = useAppStore()
+
+    const [isTeamModalOpen, setIsTeamModalOpen] = useState(false)
+    const [editingTeam, setEditingTeam] = useState<Team | undefined>()
 
     const [jiraKey, setJiraKey] = useState(settings.jiraApiKey)
     const [llmKey, setLlmKey] = useState(settings.llmApiKey)
@@ -115,6 +132,96 @@ export default function SettingsView() {
             </div>
 
             <div className="grid gap-6">
+                {/* Team Management */}
+                <Card className="border-border/60 shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                                <Users className="h-5 w-5 text-indigo-500" />
+                                <CardTitle>Gerenciamento de Times</CardTitle>
+                            </div>
+                            <CardDescription>
+                                Adicione, edite ou remova times e seus produtos associados.
+                            </CardDescription>
+                        </div>
+                        <Button
+                            onClick={() => {
+                                setEditingTeam(undefined)
+                                setIsTeamModalOpen(true)
+                            }}
+                            className="gap-2"
+                        >
+                            <Plus size={16} />
+                            Novo Time
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {teams.length === 0 ? (
+                                <div className="text-center py-8 border-2 border-dashed border-border/40 rounded-lg">
+                                    <p className="text-muted-foreground">Nenhum time cadastrado.</p>
+                                </div>
+                            ) : (
+                                <div className="grid gap-3">
+                                    {teams.map((team) => (
+                                        <div
+                                            key={team.id}
+                                            className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors"
+                                        >
+                                            <div className="space-y-1">
+                                                <h4 className="font-medium text-foreground">{team.name}</h4>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {team.products.map((p) => (
+                                                        <Badge key={p.id} variant="secondary" className="text-[10px] py-0 h-5">
+                                                            {p.name}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                                                    onClick={() => {
+                                                        setEditingTeam(team)
+                                                        setIsTeamModalOpen(true)
+                                                    }}
+                                                >
+                                                    <Pencil size={16} />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                                                    onClick={() => {
+                                                        if (confirm(`Deseja realmente excluir o time "${team.name}"?`)) {
+                                                            deleteTeam(team.id)
+                                                            toast({
+                                                                title: 'Time excluído',
+                                                                description: 'O time foi removido com sucesso.'
+                                                            })
+                                                        }
+                                                    }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Team Modal for Create/Edit */}
+                <TeamModal
+                    open={isTeamModalOpen}
+                    onOpenChange={setIsTeamModalOpen}
+                    team={editingTeam}
+                />
+
                 {/* Jira Settings */}
                 <Card className="border-border/60 shadow-sm">
                     <CardHeader>

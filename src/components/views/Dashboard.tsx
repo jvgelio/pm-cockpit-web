@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Target,
@@ -6,6 +6,9 @@ import {
   Clock,
   CheckCircle,
   TrendingUp,
+  Users,
+  Rocket,
+  Plus
 } from 'lucide-react'
 import { useAppStore } from '@/stores/appStore'
 import { Card, CardBody, CardHeader } from '@/components/shared/Card'
@@ -13,6 +16,8 @@ import { ProgressBar, StatusBadge } from '@/components/shared/StatusBadge'
 import { InitiativeRow } from '@/components/shared/InitiativeRow'
 import { MetricCard } from '@/components/shared/MetricCard'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { TeamModal } from '@/components/shared/TeamModal'
+import { Button } from '@/components/ui/button'
 import type { Initiative, CycleMetrics, InitiativeStatus, InitiativePriority } from '@/types'
 import { isThisWeek, isOverdue } from '@/lib/cycle'
 import { CockpitAdvisor } from './dashboard/CockpitAdvisor'
@@ -50,8 +55,9 @@ function calculateTeamMetrics(initiatives: Initiative[]): CycleMetrics {
 
 
 function Dashboard() {
-  const { initiatives, currentTeam, selectInitiative } = useAppStore()
+  const { initiatives, teams, currentTeam, selectInitiative } = useAppStore()
   const navigate = useNavigate()
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false)
 
   const teamInitiatives = useMemo(() => {
     if (!currentTeam) return []
@@ -78,15 +84,58 @@ function Dashboard() {
     navigate(`/initiative/${initiative.id}`)
   }
 
+  if (teams.length === 0) {
+    return (
+      <div className="flex flex-col h-[80vh] items-center justify-center p-6 animate-in fade-in zoom-in-95 duration-500">
+        <div className="max-w-md w-full text-center space-y-8">
+          <div className="relative inline-flex mb-4">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-2xl blur opacity-25" />
+            <div className="relative bg-background border border-border shadow-linear-lg rounded-2xl p-6">
+              <Rocket className="h-12 w-12 text-primary" />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Boas-vindas ao PM Cockpit!
+            </h1>
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              Vamos começar organizando seu trabalho. Crie seu primeiro time para gerenciar iniciativas e métricas.
+            </p>
+          </div>
+
+          <div className="pt-4">
+            <Button
+              size="lg"
+              onClick={() => setIsTeamModalOpen(true)}
+              className="gap-2 h-12 px-8 text-base shadow-lg shadow-primary/20 active:scale-95 transition-all"
+            >
+              <Plus size={20} />
+              Criar Meu Primeiro Time
+            </Button>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Você poderá adicionar produtos e configurar outros times nas configurações mais tarde.
+          </p>
+        </div>
+        <TeamModal open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen} />
+      </div>
+    )
+  }
+
   if (!currentTeam) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
+      <div className="flex h-[80vh] items-center justify-center p-6 animate-in fade-in duration-300">
+        <div className="text-center max-w-sm">
+          <div className="bg-muted/30 p-4 rounded-full inline-flex mb-4">
+            <Users className="h-8 w-8 text-muted-foreground/60" />
+          </div>
           <h2 className="text-xl font-medium text-foreground">
             Nenhum time selecionado
           </h2>
           <p className="mt-2 text-muted-foreground">
-            Selecione um time no menu superior para começar.
+            Selecione um time no menu superior para visualizar o cockpit.
           </p>
         </div>
       </div>
@@ -215,6 +264,7 @@ function Dashboard() {
           </div>
         </div>
       </div>
+      <TeamModal open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen} />
     </div>
   )
 }

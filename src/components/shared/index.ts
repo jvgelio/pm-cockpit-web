@@ -7,3 +7,4 @@ export * from './PageHeader';
 export * from './StatItem';
 export * from './StatusBadge';
 export * from './EmptyState';
+export * from './TeamModal';

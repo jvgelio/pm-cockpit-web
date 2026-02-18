@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type {
+  Product,
   Team,
   Cycle,
   Initiative,
@@ -18,6 +19,7 @@ import {
   parseInitiative,
   serializeInitiative,
   serializeCycle,
+  serializeTeam,
   generateInitiativeId,
   generateInitiativeFilename,
 } from '@/lib/markdown'
@@ -113,6 +115,11 @@ interface AppState {
   saveAdvisorEntry: (entry: Omit<CockpitAdvisorHistoryEntry, 'id'>) => Promise<void>
   setCurrentBriefing: (briefing: { content: string; timestamp: Date; teamId: string } | null) => void
   getLastBriefingForTeam: (teamId: string) => CockpitAdvisorHistoryEntry | null
+
+  // Team actions
+  createTeam: (data: { name: string; products: Product[] }) => Promise<Team>
+  updateTeam: (id: string, updates: Partial<Team>) => Promise<void>
+  deleteTeam: (id: string) => Promise<void>
 }
 
 const defaultFilters: FilterState = {}
@@ -718,7 +725,122 @@ export const useAppStore = create<AppState>((set, get) => ({
     const state = get()
     return state.advisorHistory.find(entry => entry.teamId === teamId) || null
   },
+
+  createTeam: async (data) => {
+    const name = data.name.trim()
+    const teamId = name.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+
+    const filePath = `teams/${teamId}.md`
+
+    const team: Team = {
+      id: teamId,
+      name,
+      products: data.products,
+      filePath,
+    }
+
+    const content = serializeTeam(team)
+    await storage.createDirectory('teams')
+    await storage.writeFile(filePath, content)
+
+    const state = get()
+    const newTeams = [...state.teams, team]
+
+    set({
+      teams: newTeams,
+      // If this is the first team, set it as current
+      ...(state.teams.length === 0 ? {
+        currentTeamId: teamId,
+        currentTeam: team,
+        isLoading: false, // Ensure loading is off if we were waiting for onboarding
+      } : {}),
+    })
+
+    return team
+  },
+
+  updateTeam: async (id, updates) => {
+    const state = get()
+    const team = state.teams.find((t) => t.id === id)
+    if (!team) return
+
+    const updated = { ...team, ...updates }
+    const content = serializeTeam(updated)
+
+    await storage.writeFile(team.filePath, content)
+
+    // Update local state
+    const newTeams = state.teams.map((t) => (t.id === id ? updated : t))
+    set({
+      teams: newTeams,
+      currentTeam: state.currentTeamId === id ? updated : state.currentTeam,
+    })
+  },
+
+  deleteTeam: async (id) => {
+    const state = get()
+    const team = state.teams.find((t) => t.id === id)
+    if (!team) return
+
+    await storage.deleteFile(team.filePath)
+
+    const newTeams = state.teams.filter((t) => t.id !== id)
+
+    // If deleted team was current, clear it
+    const isCurrent = state.currentTeamId === id
+    const nextTeam = isCurrent ? (newTeams[0] || null) : state.currentTeam
+
+    set({
+      teams: newTeams,
+      currentTeamId: nextTeam?.id || null,
+      currentTeam: nextTeam,
+    })
+
+    // Reload initiatives to clear those from deleted team
+    await apply({ initiatives: state.initiatives.filter(i => i.team !== id) })
+  },
 }))
+
+// Helper to update store state and derived metrics
+async function apply(updates: Partial<AppState>) {
+  const currentStore = useAppStore.getState()
+  const nextState = { ...currentStore, ...updates }
+
+  // Recalculate derived state if initiatives or team/cycle changes
+  if (updates.initiatives || updates.currentTeamId || updates.currentCycleId) {
+    const initiatives = nextState.initiatives
+    const currentTeamId = nextState.currentTeamId
+    const currentCycleId = nextState.currentCycleId
+
+    const teamInits = currentTeamId
+      ? initiatives.filter(i => i.team === currentTeamId)
+      : []
+
+    const currentInitiatives = currentCycleId
+      ? teamInits.filter(i => i.cycleId === currentCycleId)
+      : []
+
+    const backlogInitiatives = teamInits.filter(i => i.cycleId === null)
+
+    nextState.currentInitiatives = applyFiltersAndSort(
+      currentInitiatives,
+      nextState.filters,
+      nextState.sort
+    )
+    nextState.backlogInitiatives = applyFiltersAndSort(
+      backlogInitiatives,
+      nextState.filters,
+      nextState.sort
+    )
+    nextState.metrics = calculateMetrics(currentInitiatives)
+  }
+
+  useAppStore.setState(nextState)
+}
 
 // ============================================
 // Helper Functions
