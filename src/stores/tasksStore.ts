@@ -6,6 +6,7 @@ import {
   generateTaskId,
   generateTaskFilename,
 } from '@/lib/markdown'
+import { storage } from '@/lib/storage'
 
 // ============================================
 // Tasks Store
@@ -52,27 +53,24 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     set({ isLoading: true, error: null })
 
     try {
-      if (!window.electronAPI) {
-        throw new Error('Electron API not available')
-      }
-
-      const api = window.electronAPI
       const tasks: Task[] = []
 
       // Check if tasks folder exists
-      const tasksExists = await api.fs.exists('tasks')
+      const tasksExists = await storage.exists('tasks')
       if (!tasksExists) {
-        await api.fs.createDirectory('tasks')
+        await storage.createDirectory('tasks')
       }
 
       // Load task files
-      const entries = await api.fs.readDirectory('tasks')
+      const entries = await storage.readDirectory('tasks')
       for (const entry of entries) {
-        if (entry.isFile && entry.name.endsWith('.md')) {
+        if (!entry.isDirectory && entry.name.endsWith('.md')) {
           try {
-            const content = await api.fs.readFile(entry.path)
-            const task = parseTask(content, entry.path)
-            tasks.push(task)
+            const content = await storage.readFile(entry.path)
+            if (content) {
+              const task = parseTask(content, entry.path)
+              tasks.push(task)
+            }
           } catch {
             console.warn(`Failed to parse task: ${entry.path}`)
           }
@@ -131,7 +129,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     }
 
     const content = serializeTask(task)
-    await window.electronAPI.fs.writeFile(filePath, content)
+    await storage.writeFile(filePath, content)
 
     // Add to state
     set({ tasks: [task, ...state.tasks] })
@@ -151,7 +149,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     const updatedTask: Task = { ...task, ...updates }
 
     const content = serializeTask(updatedTask)
-    await window.electronAPI.fs.writeFile(task.filePath, content)
+    await storage.writeFile(task.filePath, content)
 
     const newTasks = [...state.tasks]
     newTasks[taskIndex] = updatedTask
@@ -166,7 +164,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       throw new Error(`Task not found: ${id}`)
     }
 
-    await window.electronAPI.fs.deleteFile(task.filePath)
+    await storage.deleteFile(task.filePath)
     set({ tasks: state.tasks.filter((t) => t.id !== id) })
   },
 

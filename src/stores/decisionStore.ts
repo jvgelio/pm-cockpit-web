@@ -7,6 +7,7 @@ import {
   generateDecisionFilename,
 } from '@/lib/markdown'
 import { aiService, type DecisionDetectionResult } from '@/lib/ai'
+import { storage } from '@/lib/storage'
 
 // ============================================
 // Decision Store
@@ -61,27 +62,24 @@ export const useDecisionStore = create<DecisionState>((set, get) => ({
     set({ isLoading: true, error: null })
 
     try {
-      if (!window.electronAPI) {
-        throw new Error('Electron API not available')
-      }
-
-      const api = window.electronAPI
       const decisions: DecisionRecord[] = []
 
       // Check if decisions folder exists
-      const decisionsExists = await api.fs.exists('decisions')
+      const decisionsExists = await storage.exists('decisions')
       if (!decisionsExists) {
-        await api.fs.createDirectory('decisions')
+        await storage.createDirectory('decisions')
       }
 
       // Load decision files
-      const entries = await api.fs.readDirectory('decisions')
+      const entries = await storage.readDirectory('decisions')
       for (const entry of entries) {
-        if (entry.isFile && entry.name.endsWith('.md')) {
+        if (!entry.isDirectory && entry.name.endsWith('.md')) {
           try {
-            const content = await api.fs.readFile(entry.path)
-            const decision = parseDecision(content, entry.path)
-            decisions.push(decision)
+            const content = await storage.readFile(entry.path)
+            if (content) {
+              const decision = parseDecision(content, entry.path)
+              decisions.push(decision)
+            }
           } catch {
             console.warn(`Failed to parse decision: ${entry.path}`)
           }
@@ -127,7 +125,7 @@ export const useDecisionStore = create<DecisionState>((set, get) => ({
     }
 
     const content = serializeDecision(decision)
-    await window.electronAPI.fs.writeFile(filePath, content)
+    await storage.writeFile(filePath, content)
 
     // Add to state (newest first)
     set({ decisions: [decision, ...state.decisions] })

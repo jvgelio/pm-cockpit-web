@@ -42,9 +42,9 @@ function Sidebar() {
       )}
     >
       {/* Logo and toggle */}
-      <div className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-border/8 electron-drag">
+      <div className="flex h-16 shrink-0 items-center justify-between px-4 border-b border-border/8">
         {!sidebarCollapsed && (
-          <div className="flex items-center gap-2 electron-no-drag animate-in slide-in-from-left-2 duration-300">
+          <div className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-300">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md shadow-primary/20">
               <Rocket className="h-5 w-5" />
             </div>
@@ -58,7 +58,7 @@ function Sidebar() {
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className="h-8 w-8 text-muted-foreground hover:bg-muted electron-no-drag"
+          className="h-8 w-8 text-muted-foreground hover:bg-muted"
         >
           {sidebarCollapsed ? (
             <ChevronRight size={18} />

@@ -244,11 +244,4 @@
   animation: fadeIn 0.2s ease-out;
 }
 
-/* Electron window controls area (macOS) */
-.electron-drag {
-  -webkit-app-region: drag;
-}
-
-.electron-no-drag {
-  -webkit-app-region: no-drag;
-}
+/* Electron window controls area removed for web version */

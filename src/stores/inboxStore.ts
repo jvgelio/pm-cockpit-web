@@ -20,6 +20,7 @@ import {
   generateInboxFilename,
 } from '@/lib/markdown'
 import { aiService } from '@/lib/ai'
+import { storage } from '@/lib/storage'
 import { useTasksStore } from './tasksStore'
 import { useDecisionStore } from './decisionStore'
 import { useAppStore } from './appStore'
@@ -88,20 +89,15 @@ export const useInboxStore = create<InboxState>((set, get) => ({
     set({ isLoading: true, error: null })
 
     try {
-      if (!window.electronAPI) {
-        throw new Error('Electron API not available')
-      }
-
-      const api = window.electronAPI
       const items: InboxItem[] = []
 
       // Check if inbox folder exists
-      const inboxExists = await api.fs.exists('inbox')
+      const inboxExists = await storage.exists('inbox')
       if (!inboxExists) {
         // Create inbox folder structure
-        await api.fs.createDirectory('inbox')
-        await api.fs.createDirectory('inbox/_inbox-items')
-        await api.fs.createDirectory('inbox/_processed')
+        await storage.createDirectory('inbox')
+        await storage.createDirectory('inbox/_inbox-items')
+        await storage.createDirectory('inbox/_processed')
       }
 
       // Load AI History
@@ -109,15 +105,17 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
       // Load pending items
       const pendingPath = 'inbox/_inbox-items'
-      const pendingExists = await api.fs.exists(pendingPath)
+      const pendingExists = await storage.exists(pendingPath)
       if (pendingExists) {
-        const entries = await api.fs.readDirectory(pendingPath)
+        const entries = await storage.readDirectory(pendingPath)
         for (const entry of entries) {
-          if (entry.isFile && entry.name.endsWith('.md')) {
+          if (!entry.isDirectory && entry.name.endsWith('.md')) {
             try {
-              const content = await api.fs.readFile(entry.path)
-              const item = parseInboxItem(content, entry.path)
-              items.push(item)
+              const content = await storage.readFile(entry.path)
+              if (content) {
+                const item = parseInboxItem(content, entry.path)
+                items.push(item)
+              }
             } catch {
               console.warn(`Failed to parse inbox item: ${entry.path}`)
             }
@@ -140,19 +138,20 @@ export const useInboxStore = create<InboxState>((set, get) => ({
   // Load AI history from filesystem
   loadAIHistory: async () => {
     try {
-      const api = window.electronAPI
       const historyPath = 'inbox/ai-history.json'
-      const historyExists = await api.fs.exists(historyPath)
+      const historyExists = await storage.exists(historyPath)
 
       if (historyExists) {
-        const content = await api.fs.readFile(historyPath)
-        const history = JSON.parse(content) as InboxAIHistoryEntry[]
-        // Convert ISO strings back to Date objects
-        const parsedHistory = history.map(entry => ({
-          ...entry,
-          timestamp: new Date(entry.timestamp)
-        }))
-        set({ aiHistory: parsedHistory.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()) })
+        const content = await storage.readFile(historyPath)
+        if (content) {
+          const history = JSON.parse(content) as InboxAIHistoryEntry[]
+          // Convert ISO strings back to Date objects
+          const parsedHistory = history.map(entry => ({
+            ...entry,
+            timestamp: new Date(entry.timestamp)
+          }))
+          set({ aiHistory: parsedHistory.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()) })
+        }
       }
     } catch (error) {
       console.error('Failed to load AI history:', error)
@@ -173,7 +172,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
     try {
       const historyPath = 'inbox/ai-history.json'
-      await window.electronAPI.fs.writeFile(historyPath, JSON.stringify(updatedHistory, null, 2))
+      await storage.writeFile(historyPath, JSON.stringify(updatedHistory, null, 2))
     } catch (error) {
       console.error('Failed to save AI history:', error)
     }
@@ -191,7 +190,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
     try {
       const historyPath = 'inbox/ai-history.json'
-      await window.electronAPI.fs.writeFile(historyPath, JSON.stringify(updatedHistory, null, 2))
+      await storage.writeFile(historyPath, JSON.stringify(updatedHistory, null, 2))
     } catch (error) {
       console.error('Failed to save AI history:', error)
     }
@@ -217,7 +216,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
     }
 
     const fileContent = serializeInboxItem(item)
-    await window.electronAPI.fs.writeFile(filePath, fileContent)
+    await storage.writeFile(filePath, fileContent)
 
     set({ inboxItems: [item, ...state.inboxItems] })
     return item
@@ -231,7 +230,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
     const updated = { ...item, ...updates }
     const content = serializeInboxItem(updated)
-    await window.electronAPI.fs.writeFile(item.filePath, content)
+    await storage.writeFile(item.filePath, content)
 
     set({
       inboxItems: state.inboxItems.map((i) => (i.id === id ? updated : i)),
@@ -244,7 +243,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
     const item = state.inboxItems.find((i) => i.id === id)
     if (!item) return
 
-    await window.electronAPI.fs.deleteFile(item.filePath)
+    await storage.deleteFile(item.filePath)
     set({ inboxItems: state.inboxItems.filter((i) => i.id !== id) })
   },
 
@@ -264,8 +263,8 @@ export const useInboxStore = create<InboxState>((set, get) => ({
     }
 
     const content = serializeInboxItem(updated)
-    await window.electronAPI.fs.writeFile(newPath, content)
-    await window.electronAPI.fs.deleteFile(item.filePath)
+    await storage.writeFile(newPath, content)
+    await storage.deleteFile(item.filePath)
 
     set({ inboxItems: state.inboxItems.filter((i) => i.id !== id) })
   },
@@ -404,7 +403,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
     }
 
     const content = serializeInboxItem(updated)
-    await window.electronAPI.fs.writeFile(item.filePath, content)
+    await storage.writeFile(item.filePath, content)
 
     set({
       inboxItems: state.inboxItems.map((i) => (i.id === itemId ? updated : i)),

@@ -1,28 +1,27 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  Sun, 
-  Moon, 
-  Laptop, 
-  LayoutDashboard, 
-  ListTodo, 
-  Inbox, 
-  FileCheck, 
-  Settings, 
-  Plus,
-  Search,
-  CheckSquare,
-  MessageSquarePlus
+import {
+    Sun,
+    Moon,
+    Laptop,
+    LayoutDashboard,
+    ListTodo,
+    Inbox,
+    FileCheck,
+    Settings,
+    Plus,
+    CheckSquare,
+    MessageSquarePlus
 } from 'lucide-react'
 import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandShortcut,
-  CommandSeparator,
+    CommandDialog,
+    CommandInput,
+    CommandList,
+    CommandEmpty,
+    CommandGroup,
+    CommandItem,
+    CommandShortcut,
+    CommandSeparator,
 } from '@/components/ui/command'
 import { useGlobalShortcut } from '@/hooks/useGlobalShortcut'
 import { useAppStore } from '@/stores/appStore'
@@ -52,10 +51,10 @@ export function CommandPalette() {
         command()
     }, [])
 
-    const isMac = typeof window !== 'undefined' && 
-      (navigator.platform.toUpperCase().indexOf('MAC') >= 0 || 
-       navigator.userAgent.indexOf('Mac') >= 0)
-    
+    const isMac = typeof window !== 'undefined' &&
+        (navigator.platform.toUpperCase().indexOf('MAC') >= 0 ||
+            navigator.userAgent.indexOf('Mac') >= 0)
+
     const modifierKey = isMac ? '⌘' : 'Ctrl+'
 
     return (
@@ -63,7 +62,7 @@ export function CommandPalette() {
             <CommandInput placeholder="Digite um comando ou pesquise..." />
             <CommandList className="max-h-[450px]">
                 <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-                
+
                 <CommandGroup heading="Ações Rápidas">
                     <CommandItem onSelect={() => runCommand(() => openCapture())}>
                         <MessageSquarePlus className="mr-2 h-4 w-4" />
@@ -75,7 +74,7 @@ export function CommandPalette() {
                         <span>Nova Iniciativa</span>
                     </CommandItem>
                 </CommandGroup>
-                
+
                 <CommandSeparator />
 
                 <CommandGroup heading="Navegação">

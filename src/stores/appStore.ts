@@ -23,6 +23,7 @@ import {
 } from '@/lib/markdown'
 import type { CycleStatus } from '@/types'
 import { getCurrentSemester, isThisWeek, isOverdue } from '@/lib/cycle'
+import { storage } from '@/lib/storage'
 
 // ============================================
 // App Store
@@ -313,24 +314,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ isLoading: true, error: null })
 
     try {
-      // Check if electronAPI is available
-      if (!window.electronAPI) {
-        throw new Error('Electron API not available. Are you running in Electron?')
-      }
-
-      const api = window.electronAPI
-      console.log('Loading data from Electron API...')
-      const dataPath = await api.app.getDataPath()
+      console.log('Loading data from storage...')
+      const dataPath = storage.getBasePath()
       set({ dataPath })
 
       // Load teams
-      const teams = await loadTeams(api)
+      const teams = await loadTeams()
 
       // Load cycles and their initiatives
-      const { cycles, initiatives } = await loadCyclesAndInitiatives(api)
+      const { cycles, initiatives } = await loadCyclesAndInitiatives()
 
       // Load backlog initiatives
-      const backlogInits = await loadBacklogInitiatives(api, teams)
+      const backlogInits = await loadBacklogInitiatives(teams)
       const allInitiatives = [...initiatives, ...backlogInits]
 
       // Auto-select first team
@@ -389,8 +384,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   reloadInitiatives: async () => {
     const state = get()
     try {
-      const api = window.electronAPI
-      const { initiatives } = await loadCyclesAndInitiatives(api)
+      const { initiatives } = await loadCyclesAndInitiatives()
 
       const currentInitiatives = initiatives.filter(
         (i) => i.cycleId === state.currentCycleId
@@ -421,7 +415,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const updated = { ...initiative, ...updates }
     const content = serializeInitiative(updated)
 
-    await window.electronAPI.fs.writeFile(initiative.filePath, content)
+    await storage.writeFile(initiative.filePath, content)
 
     // Update local state
     const initiatives = state.initiatives.map((i) =>
@@ -460,7 +454,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     const content = serializeInitiative(initiative)
-    await window.electronAPI.fs.writeFile(filePath, content)
+    await storage.writeFile(filePath, content)
 
     // Update local state
     const initiatives = [...state.initiatives, initiative]
@@ -494,7 +488,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const initiative = state.initiatives.find((i) => i.id === id)
     if (!initiative) return
 
-    await window.electronAPI.fs.deleteFile(initiative.filePath)
+    await storage.deleteFile(initiative.filePath)
 
     // Update local state
     const initiatives = state.initiatives.filter((i) => i.id !== id)
@@ -541,8 +535,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     // Write to new location and delete old file
     const content = serializeInitiative(updated)
-    await window.electronAPI.fs.writeFile(newFilePath, content)
-    await window.electronAPI.fs.deleteFile(initiative.filePath)
+    await storage.writeFile(newFilePath, content)
+    await storage.deleteFile(initiative.filePath)
 
     // Update local state
     const initiatives = state.initiatives.map((i) =>
@@ -589,8 +583,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     // Write to new location and delete old file
     const content = serializeInitiative(updated)
-    await window.electronAPI.fs.writeFile(newFilePath, content)
-    await window.electronAPI.fs.deleteFile(initiative.filePath)
+    await storage.writeFile(newFilePath, content)
+    await storage.deleteFile(initiative.filePath)
 
     // Update local state
     const initiatives = state.initiatives.map((i) =>
@@ -647,9 +641,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     // Create folder and metadata file
-    await window.electronAPI.fs.createDirectory(folderPath)
+    await storage.createDirectory(folderPath)
     const content = serializeCycle(cycle)
-    await window.electronAPI.fs.writeFile(metaFilePath, content)
+    await storage.writeFile(metaFilePath, content)
 
     // Update local state
     const newCycles = [...state.cycles, cycle]
@@ -664,19 +658,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Advisor History actions
   loadAdvisorHistory: async () => {
     try {
-      const api = window.electronAPI
       const historyPath = 'cockpit/advisor-history.json'
-      const exists = await api.fs.exists(historyPath)
+      const exists = await storage.exists(historyPath)
 
       if (exists) {
-        const content = await api.fs.readFile(historyPath)
-        const history = JSON.parse(content) as CockpitAdvisorHistoryEntry[]
-        // Convert date strings back to Date objects
-        const parsedHistory = history.map(entry => ({
-          ...entry,
-          timestamp: new Date(entry.timestamp)
-        }))
-        set({ advisorHistory: parsedHistory })
+        const content = await storage.readFile(historyPath)
+        if (content) {
+          const history = JSON.parse(content) as CockpitAdvisorHistoryEntry[]
+          // Convert date strings back to Date objects
+          const parsedHistory = history.map(entry => ({
+            ...entry,
+            timestamp: new Date(entry.timestamp)
+          }))
+          set({ advisorHistory: parsedHistory })
+        }
       }
     } catch (error) {
       console.warn('Failed to load advisor history:', error)
@@ -694,17 +689,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     const newHistory = [newEntry, ...state.advisorHistory].slice(0, 30)
 
     try {
-      const api = window.electronAPI
-
       // Ensure cockpit folder exists
-      const folderExists = await api.fs.exists('cockpit')
+      const folderExists = await storage.exists('cockpit')
       if (!folderExists) {
-        await api.fs.createDirectory('cockpit')
+        await storage.createDirectory('cockpit')
       }
 
       // Save to file
       const historyPath = 'cockpit/advisor-history.json'
-      await api.fs.writeFile(historyPath, JSON.stringify(newHistory, null, 2))
+      await storage.writeFile(historyPath, JSON.stringify(newHistory, null, 2))
 
       set({
         advisorHistory: newHistory,
@@ -731,13 +724,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 // Helper Functions
 // ============================================
 
-async function loadTeams(
-  api: typeof window.electronAPI
-): Promise<Team[]> {
+async function loadTeams(): Promise<Team[]> {
   const teams: Team[] = []
 
   // Use new bulk reading API
-  const entries = await api.fs.readDirectoryWithContent('teams', ['.md'])
+  const entries = await storage.readDirectoryWithContent('teams', ['.md'])
 
   for (const entry of entries) {
     if (entry.content) {
@@ -753,44 +744,44 @@ async function loadTeams(
   return teams
 }
 
-async function loadCyclesAndInitiatives(
-  api: typeof window.electronAPI
-): Promise<{ cycles: Cycle[]; initiatives: Initiative[] }> {
+async function loadCyclesAndInitiatives(): Promise<{ cycles: Cycle[]; initiatives: Initiative[] }> {
   const cycles: Cycle[] = []
   const initiatives: Initiative[] = []
 
-  const cycleEntries = await api.fs.readDirectory('cycles')
+  const cycleEntries = await storage.readDirectory('cycles')
 
   for (const cycleEntry of cycleEntries) {
     if (!cycleEntry.isDirectory) continue
 
     // Load cycle metadata
     const cycleMetaPath = `${cycleEntry.path}/_cycle.md`
-    const cycleExists = await api.fs.exists(cycleMetaPath)
+    const cycleExists = await storage.exists(cycleMetaPath)
 
     if (cycleExists) {
       try {
-        const cycleContent = await api.fs.readFile(cycleMetaPath)
-        const cycle = parseCycle(cycleContent, cycleMetaPath, cycleEntry.path)
-        cycles.push(cycle)
+        const cycleContent = await storage.readFile(cycleMetaPath)
+        if (cycleContent) {
+          const cycle = parseCycle(cycleContent, cycleMetaPath, cycleEntry.path)
+          cycles.push(cycle)
 
-        // Load initiatives in this cycle using bulk API
-        const initiativeEntries = await api.fs.readDirectoryWithContent(cycleEntry.path, ['.md'])
+          // Load initiatives in this cycle using bulk API
+          const initiativeEntries = await storage.readDirectoryWithContent(cycleEntry.path, ['.md'])
 
-        for (const initEntry of initiativeEntries) {
-          if (
-            initEntry.content &&
-            !initEntry.name.startsWith('_')
-          ) {
-            try {
-              const initiative = parseInitiative(
-                initEntry.content,
-                initEntry.path,
-                cycle.id
-              )
-              initiatives.push(initiative)
-            } catch {
-              console.warn(`Failed to parse initiative: ${initEntry.path}`)
+          for (const initEntry of initiativeEntries) {
+            if (
+              initEntry.content &&
+              !initEntry.name.startsWith('_')
+            ) {
+              try {
+                const initiative = parseInitiative(
+                  initEntry.content,
+                  initEntry.path,
+                  cycle.id
+                )
+                initiatives.push(initiative)
+              } catch {
+                console.warn(`Failed to parse initiative: ${initEntry.path}`)
+              }
             }
           }
         }
@@ -806,25 +797,22 @@ async function loadCyclesAndInitiatives(
   return { cycles, initiatives }
 }
 
-async function loadBacklogInitiatives(
-  api: typeof window.electronAPI,
-  teams: Team[]
-): Promise<Initiative[]> {
+async function loadBacklogInitiatives(teams: Team[]): Promise<Initiative[]> {
   const initiatives: Initiative[] = []
 
   // Check if backlog folder exists
-  const backlogExists = await api.fs.exists('backlog')
+  const backlogExists = await storage.exists('backlog')
   if (!backlogExists) return initiatives
 
   // Load initiatives from each team's backlog folder
   for (const team of teams) {
     const teamBacklogPath = `backlog/${team.id}`
-    const teamBacklogExists = await api.fs.exists(teamBacklogPath)
+    const teamBacklogExists = await storage.exists(teamBacklogPath)
 
     if (teamBacklogExists) {
       try {
         // Use bulk API
-        const entries = await api.fs.readDirectoryWithContent(teamBacklogPath, ['.md'])
+        const entries = await storage.readDirectoryWithContent(teamBacklogPath, ['.md'])
 
         for (const entry of entries) {
           if (entry.content) {
